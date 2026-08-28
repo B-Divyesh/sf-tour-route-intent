@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://tour-route-intent.sociobot.in/sitemap.xml

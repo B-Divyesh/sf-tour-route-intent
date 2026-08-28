@@ -1,5 +1,5 @@
 const CACHE = 'tour-route-intent-v1';
-const SHELL = ['/', '/assets/route-geometry.webp', '/favicon.svg', '/privacy/', '/terms/'];
+const SHELL = ['/', '/assets/route-geometry.webp', '/assets/route-geometry-mobile.webp', '/favicon.svg', '/privacy/', '/terms/'];
 self.addEventListener('install', (event) => event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL))));
 self.addEventListener('activate', (event) => event.waitUntil(caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))))));
 self.addEventListener('fetch', (event) => {

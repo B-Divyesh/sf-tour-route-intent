@@ -1,0 +1,30 @@
+{
+  "slug": "tour-route-intent",
+  "title": "Tour Route Intent",
+  "territory": "utilities",
+  "user": "Self-supported touring cyclists who know the roads or paths they want but need a route file that preserves those deliberate choices across navigation apps.",
+  "evidence": [
+    {
+      "url": "https://github.com/organicmaps/organicmaps/issues/13236",
+      "date": "2026-07-28",
+      "quote_or_summary": "A route planner keeps reconnecting waypoints onto an unwanted path; the requester wants it to preserve a known walking route between deliberate points."
+    },
+    {
+      "url": "https://bicycles.stackexchange.com/questions/100072/what-practical-lessons-from-long-term-bicycle-touring-are-most-useful-for-beginn",
+      "date": "2026-03-10",
+      "quote_or_summary": "A beginner asks what long-term bicycle tourists wish they knew about route planning, breakdowns, packing, budgets, and logistics."
+    }
+  ],
+  "recurrence": "Route planning is a named concern for both a navigation user and prospective long-distance tourists; a wrong reroute can put a loaded rider onto unsuitable roads.",
+  "current_workaround": "Add many waypoints, hand-draw a GPX in a desktop planner, and hope the phone app does not silently re-route during navigation.",
+  "incumbents_and_gap": "Komoot, RideWithGPS, and Organic Maps plan routes well; they do not universally preserve the rider's rationale for an intentional detour, surface choice, or resupply constraint in a portable route artifact.",
+  "smallest_useful_product": "Static web GPX planner that lets a user lock segments/waypoints and attach terse intent notes (surface, water, ferry, avoid-at-night), then validates whether an exported route still passes them. Non-goals: turn-by-turn navigation, live traffic, or map-data scraping.",
+  "success_measure": "In a field test, 90% of exported routes retain every locked segment when imported into two target navigation apps.",
+  "artifact_class": "static-web",
+  "monetization": "one-time — route preparation is an occasional planning task and the export must remain usable without a hosted account.",
+  "constraints": "Use openly licensed map tiles/data only; make routing-engine limitations explicit; no safety guarantee; location notes remain in the exported local file unless shared.",
+  "est_build_effort": "M",
+  "why_distinct": "It protects deliberate route intent across tools rather than replacing a full navigation product.",
+  "confidence": 3,
+  "state": "RESEARCHED"
+}

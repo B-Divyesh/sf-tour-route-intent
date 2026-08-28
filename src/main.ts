@@ -104,7 +104,7 @@ function projectTrack(track: TrackPoint[]): { points: string; xy: Array<[number,
 function canvasMarkup(): string {
   if (!state.route.track.length) {
     return `<div class="canvas-empty">
-      <img src="/assets/route-geometry.webp" width="960" height="640" alt="Abstract paper terrain crossed by a red route thread, geometric waypoints and two lock markers" fetchpriority="high" decoding="async">
+      <img src="/assets/route-geometry.webp" srcset="/assets/route-geometry-mobile.webp 480w, /assets/route-geometry.webp 960w" sizes="(max-width: 880px) 100vw, 65vw" width="960" height="640" alt="Abstract paper terrain crossed by a red route thread, geometric waypoints and two lock markers" fetchpriority="high" decoding="async">
       <div class="empty-copy"><p class="eyebrow">No route loaded</p><h2>Begin with the line you mean to ride.</h2><p>Import a GPX, try the example, or add coordinates. This tool does not calculate roads or silently reroute your choices.</p>
       <div class="button-row"><button class="button primary" id="empty-import">Import GPX</button><button class="button secondary" id="example-route">Try an example</button></div></div>
     </div>`;

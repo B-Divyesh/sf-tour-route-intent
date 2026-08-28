@@ -2,6 +2,8 @@ import { expect, test } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 test('loads the planner, edits intent, exports and has no serious accessibility issues', async ({ page }) => {
+  const consoleErrors: string[] = [];
+  page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
   await page.goto('/');
   await expect(page).toHaveTitle(/Tour Route Intent/);
   await expect(page.locator('h1')).toHaveCount(1);
@@ -12,9 +14,15 @@ test('loads the planner, edits intent, exports and has no serious accessibility 
   await expect(page.getByLabel('Short note')).toHaveValue('Stay on the signed gravel towpath');
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export intent GPX' }).click();
-  expect((await download).suggestedFilename()).toContain('harbour-to-high-pass');
+  const exported = await download;
+  expect(exported.suggestedFilename()).toContain('harbour-to-high-pass');
+  const exportPath = await exported.path();
+  expect(exportPath).not.toBeNull();
+  await page.locator('#candidate-input').setInputFiles(exportPath!);
+  await expect(page.getByRole('heading', { name: '✓ Route intent retained' })).toBeVisible();
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations.filter((item) => ['serious', 'critical'].includes(item.impact ?? ''))).toEqual([]);
+  expect(consoleErrors).toEqual([]);
 });
 
 test('keyboard can select the route and add an intent', async ({ page }) => {
@@ -32,4 +40,14 @@ test('privacy and terms pages are reachable', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Privacy');
   await page.goto('/terms/');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Terms');
+});
+
+test('fits a 390px phone without horizontal scrolling', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  const widths = await page.evaluate(() => ({ viewport: document.documentElement.clientWidth, content: document.documentElement.scrollWidth }));
+  expect(widths.content).toBe(widths.viewport);
+  await page.getByRole('button', { name: 'Try an example' }).click();
+  const routeWidths = await page.evaluate(() => ({ viewport: document.documentElement.clientWidth, content: document.documentElement.scrollWidth }));
+  expect(routeWidths.content).toBe(routeWidths.viewport);
 });
