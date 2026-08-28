@@ -1,55 +1,26 @@
-# Tour Route Intent — build handoff
+# Tour Route Intent — verification handoff
 
-Build work order: `tour-route-intent-build-1`
-Completed: 2026-08-28
+- Status: **FAIL**
+- Work order: `tour-route-intent-verify-1`
+- Tested candidate: `be8ddaf96a8c2371089613f63c6eedc4035a440e`
+- Tested URL: `https://tour-route-intent.sociobot.in`
+- Date: 2026-08-28 UTC
 
-## What shipped
+Independent QA was run from a detached clean checkout with `npm ci`, audit, all repository tests, strict TypeScript checking, the exact production build, external Playwright journeys, axe in light/dark and desktop/mobile states, the factory URL verifier, Lighthouse, request/header inspection, byte-level deployment comparison, and service-worker offline/update checks.
 
-- A responsive, local-first GPX route-intent workbench built with Vite and strict vanilla TypeScript.
-- GPX track and route import with explicit malformed/empty/oversize file errors.
-- An abstract coordinate canvas with pointer selection and full keyboard operation (arrow keys to move, Enter/Space to add intent).
-- Surface, water, ferry, avoid-at-night, and freeform intent notes attached to route points.
-- Independent locks for places and for the original line between consecutive markers.
-- Standards-compatible GPX export: readable waypoints/descriptions plus a namespaced extension that preserves lock metadata for re-import.
-- Local geometric validation of a GPX returned by another navigation app, with an adjustable 20–250 m corridor, marker ordering checks, and sampled locked-segment coverage.
-- Autosaved local draft, named local workspaces and note templates in the optional Field kit, offline/empty/error/result states, destructive confirmation, and undo for marker deletion.
-- Sociobot one-time paid unlock contract: $12 checkout link, return-token capture and URL cleanup, local token storage, once-daily verification caching, optimistic offline behavior, invalid-license handling, restore field, and local license removal. Core import/export/validation and safety behavior are not gated.
-- Light and dark survey-notebook visual treatments, reduced-motion handling, responsive 390 px layout, privacy and terms pages, service worker, sitemap, robots file, and Azure Static Web Apps configuration.
-- Original generated route illustration with reviewed source/provenance in `assets/src/` and 64 KB/20 KB WebP runtime variants.
+The build and deployment are healthy and the live files match the candidate. The release fails the product contract for four blocking reasons:
 
-## How to run and verify
+1. The locked-line validator can report “Route intent retained” when every connection in the locked span detours through a point about 189 km away.
+2. The advertised $12 checkout returns HTTP 404 from the Sociobot billing API.
+3. Dark-mode primary actions have 1.74:1 text contrast and produce serious axe findings.
+4. Standards-valid self-closing `<trkpt/>` GPX points are rejected.
 
-```sh
-npm install
-npm test
-npm run build
-```
+Additional issues: hashed assets receive only `max-age=30` rather than immutable caching; axe reports a moderate complementary-landmark issue; the mobile brand target is 34 px tall; CSP/anti-framing policy is absent.
 
-The exact deploy command is `npm run build`. It produces `dist/index.html`, `dist/privacy/index.html`, and `dist/terms/index.html`. Deploy `dist/`.
+Passing evidence includes 6 unit tests, 4 repository browser tests, zero dependency vulnerabilities, successful production output, no console/page errors, no unsolicited outbound requests, correct local persistence/export and error recovery, 390 px/200% reflow, keyboard focus, reduced motion, mocked license caching/revocation, and controlled offline reload. Live Lighthouse was 100/100/100/100 with FCP 0.9 s, LCP 1.1 s, TBT 60 ms, and CLS 0. JS is 31.28 KB raw (11.25 KB gzip) and CSS is 16.86 KB raw (4.43 KB gzip).
 
-Verification completed locally:
+Full reproduction steps and evidence are in `.factory/verification.md`.
 
-- `npm test`: 6 Vitest unit tests and 4 Playwright browser journeys passed.
-- Browser journey covers example load, intent edit, GPX download, re-import of that download, successful lock validation, zero console errors, keyboard-only marker creation, legal routes, and 390 px horizontal-overflow check.
-- Playwright axe integration: zero serious or critical violations.
-- Factory `verify-url.sh`: HTTP 200, 525 ms local load, one H1, English language, main landmark present, no missing image alt text, no unlabeled buttons, and zero console/page errors.
-- `npm run build`: passed with TypeScript strict checks.
-- Bundle: 31.28 KB JS (11.25 KB gzip), 16.86 KB CSS (4.43 KB gzip), 64 KB desktop hero, 20 KB mobile hero. No runtime font, map-tile, script, or analytics requests.
-- `npm audit --audit-level=high`: zero vulnerabilities.
-- Lighthouse 12.5.1, mobile/default throttling against the production preview:
-  - Performance: 100
-  - Accessibility: 100
-  - Best practices: 100
-  - SEO: 100
-  - FCP: 0.9 s
-  - LCP: 1.1 s
-  - Total blocking time: 0 ms
-  - CLS: 0
-- Visual inspection completed at 1440×1000 and 390×844 in Chromium, including the empty workbench and full-page layout.
+Next action: fix all four release blockers, enable the billing product, deploy the new candidate, and repeat independent verification. The two-navigation-app 90% field study remains outstanding.
 
-## Known gaps and next steps
-
-- The product-level success measure still needs a real field test: export representative routes, import into two target navigation apps, export the resulting geometry from each, and measure whether at least 90% retain every lock. The app includes the exact return validator needed for that study.
-- The factory must register `tour-route-intent` with the Sociobot billing engine and configure its return URL before a real purchase can complete. The UI intentionally contains no hardcoded product ID and points only to the product-slug checkout/verify contract.
-- Validation is geometry-based and cannot detect access legality, surface changes, live hazards, ferry cancellation, or what an app will do during turn-by-turn navigation. This is stated beside the workbench, validator, and in the terms.
-- The service worker is production-only; its caching behavior should receive a final smoke test on the deployed HTTPS origin.
+No product code was changed by the verifier.
