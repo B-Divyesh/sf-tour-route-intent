@@ -1,0 +1,8 @@
+{
+  "asset": "route-geometry.png",
+  "generated": "2026-08-28",
+  "generator": "/opt/fleet/lib/gen-image.sh (Azure AI Foundry factory-image deployment)",
+  "prompt": "Use case: stylized-concept. Asset type: wide landing and route-planner empty-state illustration. Abstract long-distance bicycle route expressed as one continuous vermilion thread passing through five precise geometric waypoint markers, with two visibly locked route spans and tiny abstract water, ferry, and rough-surface cues. World: topographic survey sheet with layered paper terrain contours and a subtle coordinate grid, no literal user interface. Materials: cut paper, graphite, screen-printed ink, fine embossed contour lines. Flat overhead editorial composition, soft raking daylight, crisp edges. Warm bone paper, forest ink, vermilion route, teal water, ochre note markers. 3:2 landscape, route travels lower-left to upper-right, generous quiet margin, readable at small size. No text, no letters, no numbers, no logos, no watermark, no people, no bicycles, no road signs, no branded maps, no photorealistic map labels, no gradients, no UI screenshots.",
+  "review": "Accepted: clean geometry, five distinct markers, two lock symbols, no text/logo artifacts or people. The ferry icons are generic and unbranded.",
+  "license": "Original generated asset commissioned for Tour Route Intent."
+}
