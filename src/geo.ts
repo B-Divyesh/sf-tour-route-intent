@@ -32,24 +32,53 @@ export function pointToSegmentMeters(point: TrackPoint, a: TrackPoint, b: TrackP
   return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
 }
 
-function distanceToTrack(point: TrackPoint, track: TrackPoint[]): { distance: number; index: number } {
-  if (track.length === 1) return { distance: haversineMeters(point, track[0]), index: 0 };
+interface TrackPosition { distance: number; index: number; fraction: number; }
+
+function distanceToTrack(point: TrackPoint, track: TrackPoint[]): TrackPosition {
+  if (track.length === 1) return { distance: haversineMeters(point, track[0]), index: 0, fraction: 0 };
   let best = Number.POSITIVE_INFINITY;
   let index = 0;
+  let fraction = 0;
   for (let i = 0; i < track.length - 1; i += 1) {
-    const distance = pointToSegmentMeters(point, track[i], track[i + 1]);
+    const [ax, ay] = xy(track[i], point);
+    const [bx, by] = xy(track[i + 1], point);
+    const dx = bx - ax;
+    const dy = by - ay;
+    const lengthSquared = dx * dx + dy * dy;
+    const candidateFraction = lengthSquared ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / lengthSquared)) : 0;
+    const distance = Math.hypot(ax + candidateFraction * dx, ay + candidateFraction * dy);
     if (distance < best) {
       best = distance;
       index = i;
+      fraction = candidateFraction;
     }
   }
-  return { distance: best, index };
+  return { distance: best, index, fraction };
 }
 
-function sample(points: TrackPoint[], maxSamples = 80): TrackPoint[] {
-  if (points.length <= maxSamples) return points;
-  const stride = (points.length - 1) / (maxSamples - 1);
-  return Array.from({ length: maxSamples }, (_, index) => points[Math.round(index * stride)]);
+function interpolate(a: TrackPoint, b: TrackPoint, fraction: number): TrackPoint {
+  return { lat: a.lat + (b.lat - a.lat) * fraction, lon: a.lon + (b.lon - a.lon) * fraction };
+}
+
+function candidateSpan(track: TrackPoint[], start: TrackPosition, end: TrackPosition): TrackPoint[] | null {
+  if (start.index > end.index || (start.index === end.index && start.fraction > end.fraction)) return null;
+  const points = [interpolate(track[start.index], track[start.index + 1], start.fraction)];
+  for (let index = start.index + 1; index <= end.index; index += 1) points.push(track[index]);
+  points.push(interpolate(track[end.index], track[end.index + 1], end.fraction));
+  return points;
+}
+
+/** Include every vertex, plus regular samples that expose departures between sparse points. */
+function sampleLine(points: TrackPoint[], spacingMeters: number, maxExtraSamples = 800): TrackPoint[] {
+  const sampled = [...points];
+  const lengths = points.slice(1).map((point, index) => haversineMeters(points[index], point));
+  const wanted = lengths.reduce((total, length) => total + Math.max(0, Math.ceil(length / spacingMeters) - 1), 0);
+  const scale = wanted > maxExtraSamples ? wanted / maxExtraSamples : 1;
+  lengths.forEach((length, index) => {
+    const divisions = Math.max(1, Math.ceil(length / (spacingMeters * scale)));
+    for (let step = 1; step < divisions; step += 1) sampled.push(interpolate(points[index], points[index + 1], step / divisions));
+  });
+  return sampled;
 }
 
 export function routeDistance(track: TrackPoint[]): number {
@@ -92,17 +121,28 @@ export function validateRoute(reference: RouteDocument, candidate: TrackPoint[],
     if (intent.lockToNext && next) {
       const from = Math.min(intent.trackIndex, next.trackIndex);
       const to = Math.max(intent.trackIndex, next.trackIndex);
-      const original = sample(reference.track.slice(from, to + 1));
-      const misses = original.map((point) => distanceToTrack(point, candidate).distance);
-      const worst = Math.max(...misses);
+      const original = reference.track.slice(from, to + 1);
+      const candidateStart = distanceToTrack(original[0], candidate);
+      const candidateEnd = distanceToTrack(original[original.length - 1], candidate);
+      const returned = candidateSpan(candidate, candidateStart, candidateEnd);
+      const spacing = Math.max(5, toleranceMeters / 3);
+      const referenceSamples = sampleLine(original, spacing);
+      const returnedSamples = returned ? sampleLine(returned, spacing) : [];
+      const referenceMisses = referenceSamples.map((point) => distanceToTrack(point, candidate).distance);
+      const returnedMisses = returnedSamples.map((point) => distanceToTrack(point, original).distance);
+      const misses = [...referenceMisses, ...returnedMisses];
+      const worst = misses.length ? Math.max(...misses) : Number.POSITIVE_INFINITY;
       const coverage = misses.filter((distance) => distance <= toleranceMeters).length / Math.max(1, misses.length);
+      const followsLine = returned !== null && coverage === 1;
       checks.push({
         id: `segment-${intent.id}`,
         label: `Locked line ${i + 1} → ${i + 2}`,
-        detail: coverage === 1
-          ? `All ${original.length} route samples stay inside the ${toleranceMeters} m corridor.`
-          : `${Math.round(coverage * 100)}% stays in the corridor; the widest departure is about ${Math.round(worst)} m.`,
-        pass: coverage === 1,
+        detail: followsLine
+          ? `The original and returned lines stay inside the ${toleranceMeters} m corridor in both directions.`
+          : returned === null
+            ? 'The locked line endpoints appear in a different route order.'
+            : `${Math.round(coverage * 100)}% of the two-way line check stays in the corridor; the widest departure is about ${Math.round(worst)} m.`,
+        pass: followsLine,
       });
     }
   }

@@ -7,8 +7,6 @@ const DAY = 86_400_000;
 
 interface CachedVerdict { valid: boolean; checkedAt: number; }
 
-export const checkoutUrl = `https://api.sociobot.in/api/v1/products/${PRODUCT}/checkout`;
-
 export function captureReturnedLicense(): string | null {
   const url = new URL(window.location.href);
   const token = url.searchParams.get('license');

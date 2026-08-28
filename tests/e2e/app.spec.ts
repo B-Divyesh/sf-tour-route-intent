@@ -51,3 +51,51 @@ test('fits a 390px phone without horizontal scrolling', async ({ page }) => {
   const routeWidths = await page.evaluate(() => ({ viewport: document.documentElement.clientWidth, content: document.documentElement.scrollWidth }));
   expect(routeWidths.content).toBe(routeWidths.viewport);
 });
+
+test('system dark mode has accessible primary actions in empty and loaded mobile states', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ colorScheme: 'dark', reducedMotion: 'reduce' });
+  await page.goto('/');
+  const emptyResults = await new AxeBuilder({ page }).analyze();
+  expect(emptyResults.violations.filter((item) => ['serious', 'critical'].includes(item.impact ?? ''))).toEqual([]);
+  await page.getByRole('button', { name: 'Try an example' }).click();
+  const loadedResults = await new AxeBuilder({ page }).analyze();
+  expect(loadedResults.violations.filter((item) => ['serious', 'critical'].includes(item.impact ?? ''))).toEqual([]);
+});
+
+test('does not advertise an unavailable checkout', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Reusable planning, coming later' })).toBeVisible();
+  await expect(page.locator('a[href*="/checkout"]')).toHaveCount(0);
+  await expect(page.getByText('New purchases are not available yet.')).toBeVisible();
+});
+
+test('first load is private by default', async ({ page }) => {
+  const thirdPartyRequests: string[] = [];
+  page.on('request', (request) => {
+    if (new URL(request.url()).origin !== 'http://127.0.0.1:4173') thirdPartyRequests.push(request.url());
+  });
+  await page.goto('/');
+  expect(await page.evaluate(() => Object.keys(localStorage))).toEqual([]);
+  expect(thirdPartyRequests).toEqual([]);
+});
+
+test('production service worker updates and restores the app offline', async ({ page, context }) => {
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(String(error)));
+  page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
+  await page.goto('/');
+  await page.evaluate(() => navigator.serviceWorker.ready);
+  await page.reload({ waitUntil: 'networkidle' });
+  expect(await page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
+  expect(await page.evaluate(async () => {
+    const registration = await navigator.serviceWorker.getRegistration();
+    await registration?.update();
+    return { active: registration?.active?.state, waiting: Boolean(registration?.waiting) };
+  })).toEqual({ active: 'activated', waiting: false });
+  await context.setOffline(true);
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect(page.locator('main')).toBeVisible();
+  await expect(page.getByText('Offline.')).toBeVisible();
+  expect(errors).toEqual([]);
+});

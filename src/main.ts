@@ -1,7 +1,7 @@
 import './styles.css';
 import { exportGpx, parseGpx } from './gpx';
 import { routeDistance, validateRoute } from './geo';
-import { captureReturnedLicense, checkoutUrl, optimisticLicenseState, removeLicense, storeLicense, verifyLicense, type LicenseState } from './license';
+import { captureReturnedLicense, optimisticLicenseState, removeLicense, storeLicense, verifyLicense, type LicenseState } from './license';
 import type { IntentKind, RouteDocument, RouteIntent, TrackPoint, ValidationReport } from './types';
 
 const DRAFT_KEY = 'tour-route-intent:draft';
@@ -187,10 +187,10 @@ function paidMarkup(): string {
       <button class="text-button" id="remove-license">Remove license from this device</button></section>`;
   }
   const notice = stateCopy === 'invalid' ? 'License no longer active. You can keep using every free route tool.' : stateCopy === 'offline' ? 'Verification is unavailable offline. Free tools still work.' : stateCopy === 'checking' ? 'Checking saved license…' : '';
-  return `<section class="field-kit locked" aria-labelledby="field-kit-heading"><div><p class="eyebrow">Optional one-time unlock</p><h2 id="field-kit-heading">Field kit · $12 once</h2><p>Save multiple named workspaces on this device and reuse water, ferry, surface, and night templates. No account or subscription. Core export, validation, accessibility, and safety notices stay free.</p></div>
-    ${notice ? `<p class="license-notice">${notice}</p>` : ''}<div class="button-row"><a class="button primary" href="${checkoutUrl}">Buy field kit</a></div>
+  return `<section class="field-kit locked" aria-labelledby="field-kit-heading"><div><p class="eyebrow">Field kit</p><h2 id="field-kit-heading">Reusable planning, coming later</h2><p>New purchases are not available yet. Existing license holders can still restore multiple local workspaces and water, ferry, surface, and night templates. Core export, validation, accessibility, and safety notices stay free.</p></div>
+    ${notice ? `<p class="license-notice">${notice}</p>` : ''}
     <form id="restore-license" class="inline-form"><label for="license-token">Have a license? Paste it here</label><div><input id="license-token" autocomplete="off" spellcheck="false"><button class="button secondary">Verify license</button></div></form>
-    <p class="legal-small">Secure checkout and refunds are handled by Sociobot/Dodo, the merchant of record. See <a href="/privacy/">privacy</a> and <a href="/terms/">terms</a>.</p></section>`;
+    <p class="legal-small">No payment is taken by this site. See <a href="/privacy/">privacy</a> and <a href="/terms/">terms</a>.</p></section>`;
 }
 
 function loadSaved(): RouteDocument[] {
@@ -202,7 +202,7 @@ function render(): void {
   app!.innerHTML = `<header class="site-header"><a class="brand" href="/" aria-label="Tour Route Intent home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>Tour Route<br><strong>Intent</strong></span></a>
     <nav aria-label="Utility navigation"><a href="#how">How it works</a><a href="#field-kit">Field kit</a><button id="theme-toggle" class="icon-button" aria-label="Toggle color theme"><span aria-hidden="true">◐</span></button></nav></header>
     <main id="main"><section class="intro" aria-labelledby="page-title"><div><p class="eyebrow">A portable memory for your route</p><h1 id="page-title">Keep the line.<br><em>Keep the reason.</em></h1><p class="lede">Mark the places and segments you chose on purpose. Carry those decisions in GPX, then check whether another app kept them.</p></div>
-      <aside class="scope-note"><span class="scope-symbol" aria-hidden="true">⌁</span><div><strong>This is not a routing engine.</strong><p>No live map, traffic, or safety guarantee. Your route and notes stay in this browser and exported files unless you share them.</p></div></aside></section>
+      <div class="scope-note"><span class="scope-symbol" aria-hidden="true">⌁</span><div><strong>This is not a routing engine.</strong><p>No live map, traffic, or safety guarantee. Your route and notes stay in this browser and exported files unless you share them.</p></div></div></section>
     ${state.online ? '' : `<div class="offline-banner" role="status"><strong>Offline.</strong> Planning, export, and local validation still work. License verification will wait.</div>`}
     <div class="live-region" aria-live="polite" aria-atomic="true">${escapeHtml(state.status)}</div>${state.error ? `<div class="error-banner" role="alert"><strong>Couldn’t complete that.</strong> ${escapeHtml(state.error)}</div>` : ''}
     <section class="workbench" aria-labelledby="workbench-heading"><div class="workbench-bar"><div><span class="section-number">1</span><div><p class="eyebrow">Bring your chosen line</p><h2 id="workbench-heading">Route workbench</h2></div></div>

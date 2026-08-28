@@ -12,7 +12,7 @@ Live product: <https://tour-route-intent.sociobot.in>
 - Locks a place or the original line between consecutive intent markers.
 - Exports a standards-compatible GPX and validates a returned GPX against an adjustable 20–250 m corridor.
 - Autosaves the current draft in browser storage and works offline after the production shell is cached.
-- Offers an optional $12 one-time Field kit unlock for multiple local workspaces and note templates. Core import, export, validation, accessibility, and safety notices are free.
+- Keeps core import, export, validation, accessibility, and safety notices free. The planned one-time Field kit is not offered for sale until the factory provisions checkout; existing license holders can still restore their local unlock.
 
 It deliberately does not calculate routes, provide turn-by-turn navigation, fetch map tiles, use live traffic, or guarantee that a road/path is legal or safe.
 
@@ -25,16 +25,18 @@ npm install
 npm run dev
 ```
 
-Open the URL printed by Vite. No API key is required for the app. License verification uses the Sociobot billing API only when a license is present.
+Open the URL printed by Vite. No API key is required for the app. Existing-license verification uses the Sociobot billing API only when a license is present.
 
 ## Test and build
 
 ```sh
 npm test
+npm run lint
+npm run typecheck
 npm run build
 ```
 
-`npm test` runs route/GPX unit tests and Playwright browser tests, including keyboard operation, export/reimport validation, a serious/critical axe scan, legal pages, and 390 px overflow. The exact production build command is `npm run build`; output lands in `dist/` with `dist/index.html` at its root.
+`npm test` runs route/GPX unit tests and Playwright browser tests, including keyboard operation, export/reimport validation, light/dark serious/critical axe scans, legal pages, and 390 px overflow. The exact production build command is `npm run build`; output lands in `dist/` with `dist/index.html` at its root.
 
 To inspect the production build:
 
@@ -44,7 +46,7 @@ npm run preview
 
 ## Data and privacy
 
-GPX files, coordinates, intent notes, and saved workspaces are processed locally. The app has no analytics, map-tile requests, third-party fonts, or runtime CDN dependencies. It contacts `api.sociobot.in` only for optional Field kit checkout/license verification. See [`privacy/index.html`](privacy/index.html) and [`terms/index.html`](terms/index.html).
+GPX files, coordinates, intent notes, and saved workspaces are processed locally. The app has no analytics, map-tile requests, third-party fonts, or runtime CDN dependencies. It contacts `api.sociobot.in` only when an existing Field kit license is restored or reverified. See [`privacy/index.html`](privacy/index.html) and [`terms/index.html`](terms/index.html).
 
 ## Design and asset provenance
 

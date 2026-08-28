@@ -16,6 +16,7 @@ The product is a focused workbench, not a marketing landing page. On desktop, th
 - `--ink-muted: #52615b` — supporting text (6.0:1 on paper)
 - `--route: #c33d2e` — deliberate route / primary action
 - `--route-deep: #8c281f` — interactive route text and hover
+- `--action: #8c281f` — primary controls with warm-white text (8.47:1)
 - `--moss: #285d4b` — locks, successful validation
 - `--water: #17637a` — information / water intent
 - `--warning: #8b520b` — caution
@@ -30,6 +31,7 @@ The product is a focused workbench, not a marketing landing page. On desktop, th
 - `--ink-muted: #bbc7c1`
 - `--route: #ff806d`
 - `--route-deep: #ffae9f`
+- `--action: #a93429` — primary controls with warm-white text (6.43:1)
 - `--moss: #72c7a2`
 - `--water: #71c6dc`
 - `--warning: #f2bd65`

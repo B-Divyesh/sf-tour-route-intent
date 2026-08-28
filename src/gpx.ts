@@ -24,10 +24,12 @@ function parsePointBlock(attributes: string, body: string): TrackPoint | undefin
 
 export function parseGpx(xml: string): RouteDocument {
   if (!/<gpx\b/i.test(xml)) throw new Error('This does not look like a GPX file. Choose a .gpx file exported by a route or navigation app.');
-  const pointPattern = /<(trkpt|rtept)\b([^>]*)>([\s\S]*?)<\/\1>/gi;
+  // GPX 1.1 permits empty point elements (`<trkpt .../>`) as well as points
+  // containing children such as elevation. Accept both serializations.
+  const pointPattern = /<(trkpt|rtept)\b([^>]*?)(?:\/\s*>|>([\s\S]*?)<\/\1\s*>)/gi;
   const track: TrackPoint[] = [];
   for (const match of xml.matchAll(pointPattern)) {
-    const point = parsePointBlock(match[2], match[3]);
+    const point = parsePointBlock(match[2], match[3] ?? '');
     if (point) track.push(point);
   }
   if (track.length < 2) throw new Error('No usable route line was found. The GPX needs at least two trkpt or rtept points.');
