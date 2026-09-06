@@ -85,4 +85,16 @@ Theme follows `prefers-color-scheme`; both treatments preserve at least 4.5:1 bo
 - Generation: Azure AI Foundry factory image deployment via `/opt/fleet/lib/gen-image.sh`, 2026-08-28. Original generated asset for this product; no third-party source material.
 - Delivery: retain PNG source and prompt sidecar in `assets/src/`; ship an optimized WebP at ≤300 KB with explicit dimensions.
 
+### Derived site assets
+
+- `tour-route-intent-social.jpg`: 1200 × 630 centre crop of the original generated route geometry, exported locally without added text.
+- `apple-touch-icon.png`: 180 × 180 centre crop of the same original artwork, exported locally without added text.
+- The demo uses the drawn route canvas, so the sample opens directly on useful route content.
+
+## First-screen and demo treatment
+
+The first screen puts the plain GPX job, touring-cyclist audience, sample action, and three facts before the workbench. The layout keeps the asymmetric survey-sheet composition, with text in the wider column and a scope note at its edge.
+
+Demo mode adds a narrow paper-like status strip with reset and exit controls. It uses the same survey-notebook materials while keeping temporary state visible after every rerender.
+
 All interface icons and map geometry are original inline SVG/CSS authored for this product. The footer discloses the generated illustration.

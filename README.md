@@ -1,60 +1,90 @@
 # Tour Route Intent
 
-Tour Route Intent is a local-first GPX workbench for self-supported touring cyclists who already know the line they want to ride. It lets a rider mark deliberate places and route spans, attach short reasons such as surface, water, ferry, or avoid-at-night, export those decisions in a portable GPX, and check whether a route returned by another app still follows them.
+Tour Route Intent helps self-supported touring cyclists preserve deliberate route choices in GPX files and check returned routes.
 
-Live product: <https://tour-route-intent.sociobot.in>
+Live product: <https://tour-route-intent.sociobot.in/>
+
+One-click sample: <https://tour-route-intent.sociobot.in/demo/>
 
 ## What it does
 
-- Imports GPX track or route geometry without calling a routing engine.
-- Selects route points with pointer, touch, or keyboard.
-- Stores readable intent notes as standard GPX waypoints and lock metadata in a namespaced GPX extension.
-- Locks a place or the original line between consecutive intent markers.
-- Exports a standards-compatible GPX and validates a returned GPX against an adjustable 20–250 m corridor.
-- Autosaves the current draft in browser storage and works offline after the production shell is cached.
-- Keeps core import, export, validation, accessibility, and safety notices free. The planned one-time Field kit is not offered for sale until the factory provisions checkout; existing license holders can still restore their local unlock.
+- Imports GPX track or route geometry without calculating a new route.
+- Selects route points with pointer, touch, or keyboard input.
+- Exports notes as GPX waypoints and stores lock details in a namespaced extension.
+- Checks locked places and both directions of locked lines within a 20–250 metre corridor.
+- Saves the real draft in browser storage and works offline after the first visit.
+- Keeps GPX import, export, route checks, accessibility, and safety information free.
 
-It deliberately does not calculate routes, provide turn-by-turn navigation, fetch map tiles, use live traffic, or guarantee that a road/path is legal or safe.
+It does not provide navigation, map tiles, live traffic, or safety checks. Riders must check current conditions and legal access.
+
+## Try the isolated demo
+
+Open `/demo/` or select **Try it with sample data** on the first screen. The sample contains nine route points and three practical notes.
+
+Demo edits use the `demo:tour-route-intent:draft` session-storage key. Demo mode never reads or writes the real draft, saved workspaces, theme, or license keys.
+
+Use **Reset demo** to restore the sample. Use **Start for real** to discard demo changes and return to your existing real draft.
 
 ## Run locally
 
-Requires Node.js 20 or newer.
+Install Node.js 20 or newer, then run:
 
 ```sh
-npm install
+npm ci
 npm run dev
 ```
 
-Open the URL printed by Vite. No API key is required for the app. Existing-license verification uses the Sociobot billing API only when a license is present.
+Open the URL printed by Vite.
 
 ## Test and build
 
+From a clean checkout:
+
 ```sh
-npm test
+npm ci
+npm audit --audit-level=high
 npm run lint
 npm run typecheck
+npm test
 npm run build
 ```
 
-`npm test` runs route/GPX unit tests and Playwright browser tests, including keyboard operation, export/reimport validation, light/dark serious/critical axe scans, legal pages, and 390 px overflow. The exact production build command is `npm run build`; output lands in `dist/` with `dist/index.html` at its root.
+`npm test` runs GPX unit tests and browser journeys. The browser suite covers the demo, keyboard and touch use, invalid input, offline reload, accessibility, legal pages, and a real 404 response.
 
-To inspect the production build:
+Every public claim is mapped in [`.factory/claims.json`](.factory/claims.json). Run one claim with its documented command, for example:
 
 ```sh
-npm run preview
+npm run test:claims -- --grep @claim:demo-isolation
+```
+
+The production build is written to `dist/`, with `dist/index.html` at its root. To inspect that artifact with its real local 404 behavior:
+
+```sh
+npm run build
+npm run serve:test
 ```
 
 ## Data and privacy
 
-GPX files, coordinates, intent notes, and saved workspaces are processed locally. The app has no analytics, map-tile requests, third-party fonts, or runtime CDN dependencies. It contacts `api.sociobot.in` only when an existing Field kit license is restored or reverified. See [`privacy/index.html`](privacy/index.html) and [`terms/index.html`](terms/index.html).
+Route files, coordinates, notes, export, and validation stay in the browser. The app has no analytics, advertising, map tiles, third-party fonts, or runtime CDN requests.
+
+The billing API is contacted only after a visitor provides an existing Field kit license. See the [privacy policy](privacy/index.html) and [terms](terms/index.html).
+
+## Field kit
+
+The Field kit is a $12 one-time license for local named workspaces and four note templates. New purchases are unavailable until factory billing registration is complete.
+
+Existing license holders can still verify a license and use those paid tools. The free GPX workflow does not require an account or license.
 
 ## Design and asset provenance
 
-The product-specific visual system and generated-asset prompt are documented in [`.factory/design.md`](.factory/design.md). The original illustration and provenance sidecars are in `assets/src/`; optimized runtime WebP variants are in `public/assets/`.
+The visual system and original generated-art prompt are documented in [`.factory/design.md`](.factory/design.md). Source artwork and provenance are in `assets/src/`.
 
 ## Deploy
 
-Deploy the contents of `dist/` as an Azure Static Web App. `public/staticwebapp.config.json` supplies the navigation fallback and security headers. The factory owns DNS, billing product registration, and release configuration.
+Deploy `dist/` as the `sf-tour-route-intent` Azure Static Web App. The committed static-web configuration defines redirects, cache rules, security headers, and the 404 response.
+
+The factory owns DNS, billing registration, and release configuration.
 
 ## License
 

@@ -1,0 +1,1 @@
+Preserve deliberate GPX route choices and check whether another app kept them.
