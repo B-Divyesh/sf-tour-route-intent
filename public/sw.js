@@ -1,5 +1,5 @@
-const CACHE = 'tour-route-intent-v4';
-const SHELL = ['/assets/route-geometry.webp', '/assets/route-geometry-mobile.webp', '/favicon.svg', '/privacy/', '/terms/'];
+const CACHE = 'tour-route-intent-v5';
+const SHELL = ['/', '/demo/', '/privacy/', '/terms/', '/404.html', '/assets/route-geometry.webp', '/assets/route-geometry-mobile.webp', '/assets/tour-route-intent-social.jpg', '/favicon.svg', '/apple-touch-icon.png'];
 
 async function cacheShell() {
   const cache = await caches.open(CACHE);

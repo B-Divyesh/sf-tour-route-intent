@@ -7,6 +7,9 @@ import type { IntentKind, RouteDocument, RouteIntent, TrackPoint, ValidationRepo
 const DRAFT_KEY = 'tour-route-intent:draft';
 const SAVED_KEY = 'tour-route-intent:workspaces';
 const THEME_KEY = 'tour-route-intent:theme';
+const DEMO_DRAFT_KEY = 'demo:tour-route-intent:draft';
+const DEMO_THEME_KEY = 'demo:tour-route-intent:theme';
+const isDemo = location.pathname === '/demo' || location.pathname === '/demo/' || new URLSearchParams(location.search).get('demo') === '1';
 const kindLabels: Record<IntentKind, string> = {
   surface: 'Surface choice', water: 'Water stop', ferry: 'Ferry timing', 'avoid-night': 'Avoid at night', other: 'Other reason',
 };
@@ -27,15 +30,32 @@ interface AppState {
 
 function emptyRoute(): RouteDocument { return { name: 'My deliberate tour', track: [], intents: [] }; }
 
-function loadDraft(): RouteDocument {
-  try {
-    const draft = JSON.parse(localStorage.getItem(DRAFT_KEY) ?? '') as RouteDocument;
-    if (Array.isArray(draft.track) && Array.isArray(draft.intents)) return draft;
-  } catch { /* use empty route */ }
-  return emptyRoute();
+function exampleRoute(): RouteDocument {
+  return {
+    name: 'Harbour to high pass',
+    track: [
+      { lat: 54.9681, lon: -3.1802 }, { lat: 54.9804, lon: -3.1421 }, { lat: 54.9918, lon: -3.1074 },
+      { lat: 55.0128, lon: -3.0829 }, { lat: 55.0275, lon: -3.0402 }, { lat: 55.0516, lon: -3.0121 },
+      { lat: 55.0683, lon: -2.9688 }, { lat: 55.0834, lon: -2.9239 }, { lat: 55.1024, lon: -2.8810 },
+    ],
+    intents: [
+      { id: crypto.randomUUID(), trackIndex: 2, kind: 'surface', note: 'Stay on the signed gravel towpath', lockPoint: true, lockToNext: true },
+      { id: crypto.randomUUID(), trackIndex: 5, kind: 'water', note: 'Reliable tap at the village hall', lockPoint: true, lockToNext: false },
+      { id: crypto.randomUUID(), trackIndex: 7, kind: 'avoid-night', note: 'Pass before dusk: exposed moor road', lockPoint: true, lockToNext: false },
+    ],
+  };
 }
 
-const token = captureReturnedLicense();
+function loadDraft(): RouteDocument {
+  try {
+    const stored = isDemo ? sessionStorage.getItem(DEMO_DRAFT_KEY) : localStorage.getItem(DRAFT_KEY);
+    const draft = JSON.parse(stored ?? '') as RouteDocument;
+    if (Array.isArray(draft.track) && Array.isArray(draft.intents)) return draft;
+  } catch { /* use empty route */ }
+  return isDemo ? exampleRoute() : emptyRoute();
+}
+
+const token = isDemo ? null : captureReturnedLicense();
 const state: AppState = {
   route: loadDraft(), selectedIndex: null, selectedIntentId: null, report: null, tolerance: 75,
   status: '', error: '', online: navigator.onLine, licenseToken: token, license: optimisticLicenseState(token), undoIntent: null,
@@ -49,7 +69,9 @@ function escapeHtml(value: string): string {
 }
 
 function saveDraft(): void {
-  localStorage.setItem(DRAFT_KEY, JSON.stringify(state.route));
+  const serialized = JSON.stringify(state.route);
+  if (isDemo) sessionStorage.setItem(DEMO_DRAFT_KEY, serialized);
+  else localStorage.setItem(DRAFT_KEY, serialized);
 }
 
 function announce(message: string): void {
@@ -72,22 +94,6 @@ function setRoute(route: RouteDocument, message: string): void {
   render();
 }
 
-function exampleRoute(): RouteDocument {
-  return {
-    name: 'Harbour to high pass',
-    track: [
-      { lat: 54.9681, lon: -3.1802 }, { lat: 54.9804, lon: -3.1421 }, { lat: 54.9918, lon: -3.1074 },
-      { lat: 55.0128, lon: -3.0829 }, { lat: 55.0275, lon: -3.0402 }, { lat: 55.0516, lon: -3.0121 },
-      { lat: 55.0683, lon: -2.9688 }, { lat: 55.0834, lon: -2.9239 }, { lat: 55.1024, lon: -2.8810 },
-    ],
-    intents: [
-      { id: crypto.randomUUID(), trackIndex: 2, kind: 'surface', note: 'Stay on the signed gravel towpath', lockPoint: true, lockToNext: true },
-      { id: crypto.randomUUID(), trackIndex: 5, kind: 'water', note: 'Reliable tap at the village hall', lockPoint: true, lockToNext: false },
-      { id: crypto.randomUUID(), trackIndex: 7, kind: 'avoid-night', note: 'Pass before dusk: exposed moor road', lockPoint: true, lockToNext: false },
-    ],
-  };
-}
-
 function projectTrack(track: TrackPoint[]): { points: string; xy: Array<[number, number]> } {
   const width = 800; const height = 520; const pad = 58;
   const lats = track.map((point) => point.lat); const lons = track.map((point) => point.lon);
@@ -105,8 +111,8 @@ function canvasMarkup(): string {
   if (!state.route.track.length) {
     return `<div class="canvas-empty">
       <img src="/assets/route-geometry.webp" srcset="/assets/route-geometry-mobile.webp 480w, /assets/route-geometry.webp 960w" sizes="(max-width: 880px) 100vw, 65vw" width="960" height="640" alt="Abstract paper terrain crossed by a red route thread, geometric waypoints and two lock markers" fetchpriority="high" decoding="async">
-      <div class="empty-copy"><p class="eyebrow">No route loaded</p><h2>Begin with the line you mean to ride.</h2><p>Import a GPX, try the example, or add coordinates. This tool does not calculate roads or silently reroute your choices.</p>
-      <div class="button-row"><button class="button primary" id="empty-import">Import GPX</button><button class="button secondary" id="example-route">Try an example</button></div></div>
+      <div class="empty-copy"><p class="eyebrow">No route loaded</p><h2>Import the route you plan to ride</h2><p>The imported points stay in their original order. This tool does not calculate or change the route.</p>
+      <div class="button-row"><button class="button primary" id="empty-import">Import GPX</button><a class="button secondary" href="/demo/">Try it with sample data</a></div></div>
     </div>`;
   }
   const projected = projectTrack(state.route.track);
@@ -178,6 +184,9 @@ function validationMarkup(): string {
 }
 
 function paidMarkup(): string {
+  if (isDemo) {
+    return `<section class="field-kit locked" aria-labelledby="field-kit-heading"><div><p class="eyebrow">Field kit</p><h2 id="field-kit-heading">Paid tools stay outside the demo</h2><p>Start for real to restore an existing license. The sample does not read or change saved licenses or workspaces.</p></div></section>`;
+  }
   const stateCopy = state.license;
   if (stateCopy === 'unlocked') {
     const saved = loadSaved();
@@ -187,22 +196,26 @@ function paidMarkup(): string {
       <button class="text-button" id="remove-license">Remove license from this device</button></section>`;
   }
   const notice = stateCopy === 'invalid' ? 'License no longer active. You can keep using every free route tool.' : stateCopy === 'offline' ? 'Verification is unavailable offline. Free tools still work.' : stateCopy === 'checking' ? 'Checking saved license…' : '';
-  return `<section class="field-kit locked" aria-labelledby="field-kit-heading"><div><p class="eyebrow">Field kit</p><h2 id="field-kit-heading">Reusable planning, coming later</h2><p>New purchases are not available yet. Existing license holders can still restore multiple local workspaces and water, ferry, surface, and night templates. Core export, validation, accessibility, and safety notices stay free.</p></div>
+  return `<section class="field-kit locked" aria-labelledby="field-kit-heading"><div><p class="eyebrow">Field kit</p><h2 id="field-kit-heading">Reusable planning · $12 once</h2><p>New purchases are not available yet. Existing license holders can restore local workspaces and four note templates. GPX import, export, and route checks stay free.</p></div>
     ${notice ? `<p class="license-notice">${notice}</p>` : ''}
     <form id="restore-license" class="inline-form"><label for="license-token">Have a license? Paste it here</label><div><input id="license-token" autocomplete="off" spellcheck="false"><button class="button secondary">Verify license</button></div></form>
     <p class="legal-small">No payment is taken by this site. See <a href="/privacy/">privacy</a> and <a href="/terms/">terms</a>.</p></section>`;
 }
 
 function loadSaved(): RouteDocument[] {
+  if (isDemo) return [];
   try { const routes = JSON.parse(localStorage.getItem(SAVED_KEY) ?? '[]') as RouteDocument[]; return Array.isArray(routes) ? routes : []; } catch { return []; }
 }
 
 function render(): void {
   const distance = routeDistance(state.route.track);
+  if (isDemo) document.title = 'Demo — Tour Route Intent';
   app!.innerHTML = `<header class="site-header"><a class="brand" href="/" aria-label="Tour Route Intent home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>Tour Route<br><strong>Intent</strong></span></a>
-    <nav aria-label="Utility navigation"><a href="#how">How it works</a><a href="#field-kit">Field kit</a><button id="theme-toggle" class="icon-button" aria-label="Toggle color theme"><span aria-hidden="true">◐</span></button></nav></header>
-    <main id="main"><section class="intro" aria-labelledby="page-title"><div><p class="eyebrow">A portable memory for your route</p><h1 id="page-title">Keep the line.<br><em>Keep the reason.</em></h1><p class="lede">Mark the places and segments you chose on purpose. Carry those decisions in GPX, then check whether another app kept them.</p></div>
-      <div class="scope-note"><span class="scope-symbol" aria-hidden="true">⌁</span><div><strong>This is not a routing engine.</strong><p>No live map, traffic, or safety guarantee. Your route and notes stay in this browser and exported files unless you share them.</p></div></div></section>
+    <nav aria-label="Main navigation"><a href="/demo/"${isDemo ? ' aria-current="page"' : ''}>Demo</a><a href="/#how">How it works</a><a href="/privacy/">Privacy</a><button id="theme-toggle" class="icon-button" aria-label="Toggle color theme"><span aria-hidden="true">◐</span></button></nav></header>
+    ${isDemo ? `<section class="demo-banner" aria-label="Demo controls"><div><strong>Demo — sample data, nothing is saved</strong><span>Changes stay in this tab and never change your real draft.</span></div><div><button id="reset-demo" class="text-button">Reset demo</button><a id="start-real" class="button secondary" href="/">Start for real</a></div></section>` : ''}
+    <main id="main"><section class="intro" aria-labelledby="page-title"><div><p class="eyebrow">${isDemo ? 'Sample GPX route' : 'GPX route intent checker'}</p><h1 id="page-title">${isDemo ? 'Check a sample GPX route' : 'Preserve and check your GPX route'}</h1><p class="lede">For self-supported touring cyclists who know their route and need other apps to keep deliberate places and segments.</p>
+      ${isDemo ? `<p class="demo-intro">The sample has nine route points and three notes for surface, water, and daylight.</p>` : `<div class="hero-actions"><a class="button primary" href="/demo/">Try it with sample data</a><span>Loads a nine-point tour with three route notes.</span><button class="button secondary" id="hero-import">Import your GPX</button></div><ul class="plain-facts"><li>Your route is processed in this browser.</li><li>Works offline after the first visit.</li><li>GPX import, export, and checks are free.</li></ul>`}</div>
+      <div class="scope-note"><span class="scope-symbol" aria-hidden="true">⌁</span><div><strong>This tool compares GPX geometry.</strong><p>It does not fetch maps or traffic. Check legal access and current conditions yourself.</p></div></div></section>
     ${state.online ? '' : `<div class="offline-banner" role="status"><strong>Offline.</strong> Planning, export, and local validation still work. License verification will wait.</div>`}
     <div class="live-region" aria-live="polite" aria-atomic="true">${escapeHtml(state.status)}</div>${state.error ? `<div class="error-banner" role="alert"><strong>Couldn’t complete that.</strong> ${escapeHtml(state.error)}</div>` : ''}
     <section class="workbench" aria-labelledby="workbench-heading"><div class="workbench-bar"><div><span class="section-number">1</span><div><p class="eyebrow">Bring your chosen line</p><h2 id="workbench-heading">Route workbench</h2></div></div>
@@ -213,8 +226,9 @@ function render(): void {
     </section>
     <div class="lower-grid" id="how">${editorMarkup()}${validationMarkup()}</div>
     <div id="field-kit">${paidMarkup()}</div>
-    <section class="method"><p class="eyebrow">What the file carries</p><div><h2>The line remains standard GPX.</h2><p>Intent markers are ordinary GPX waypoints with readable names and descriptions. Lock details also live in a namespaced extension. Apps that ignore extensions can still show the line and notes; they may still recalculate it, which is why the return check exists.</p></div><ol><li><span>01</span>Import or draw your known line</li><li><span>02</span>Mark deliberate places and spans</li><li><span>03</span>Export, open elsewhere, validate</li></ol></section>
-    </main><footer><div class="brand footer-brand"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>Tour Route <strong>Intent</strong></span></div><p>Local-first route preparation for self-supported touring cyclists.</p><nav aria-label="Legal"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="https://github.com/B-Divyesh/sf-tour-route-intent">Source</a></nav><small>Illustration generated for this product with Azure AI Foundry. © 2026 Sociobot.</small></footer>`;
+    <section class="method" aria-labelledby="how-heading"><p class="eyebrow">Three steps</p><div><h2 id="how-heading">How it works</h2><p>Intent markers become GPX waypoints. Lock details use a namespaced extension. Other apps may recalculate the line, so check the GPX they return.</p></div><ol><li><span>01</span>Import your known GPX line</li><li><span>02</span>Mark deliberate places and spans</li><li><span>03</span>Export it and check the returned GPX</li></ol></section>
+    <section class="limits" aria-labelledby="limits-heading"><p class="eyebrow">Limits and privacy</p><div><h2 id="limits-heading">What this tool does not do</h2><p>It does not plan routes, guide turns, fetch maps, check traffic, or judge safety. Your route stays in this browser unless you export and share it.</p></div></section>
+    </main><footer><a class="brand footer-brand" href="/" aria-label="Tour Route Intent home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span><span>Tour Route <strong>Intent</strong></span></a><p>Prepare and check deliberate GPX route choices.</p><nav aria-label="Legal"><a href="/privacy/">Privacy</a><a href="/terms/">Terms</a><a href="https://github.com/B-Divyesh/sf-tour-route-intent">Source</a></nav><small>Built by Param Factory · v1.1.0 · Illustration generated for this product with Azure AI Foundry.</small></footer>`;
   bindEvents();
 }
 
@@ -245,15 +259,17 @@ function addIntent(): void {
 
 function bindEvents(): void {
   click('theme-toggle', () => {
-    const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = next; localStorage.setItem(THEME_KEY, next);
+    const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = next;
+    if (isDemo) sessionStorage.setItem(DEMO_THEME_KEY, next); else localStorage.setItem(THEME_KEY, next);
   });
   const routeInput = document.querySelector<HTMLInputElement>('#route-input');
   const openImport = () => routeInput?.click();
-  click('import-route', openImport); click('empty-import', openImport);
+  click('import-route', openImport); click('empty-import', openImport); click('hero-import', openImport);
   routeInput?.addEventListener('change', () => readFile(routeInput, (text) => {
     try { const route = parseGpx(text); setRoute(route, `Imported ${route.track.length} route points and ${route.intents.length} intent markers.`); } catch (error) { fail(error instanceof Error ? error.message : 'The GPX could not be parsed.'); render(); }
   }));
-  click('example-route', () => setRoute(exampleRoute(), 'Example route loaded. Try changing its intent markers or validating an exported copy.'));
+  click('reset-demo', () => { sessionStorage.removeItem(DEMO_DRAFT_KEY); setRoute(exampleRoute(), 'Demo reset to the original sample route.'); });
+  document.querySelector<HTMLAnchorElement>('#start-real')?.addEventListener('click', () => { sessionStorage.removeItem(DEMO_DRAFT_KEY); sessionStorage.removeItem(DEMO_THEME_KEY); });
   click('clear-route', () => { if (confirm(`Clear “${state.route.name}” and its ${state.route.intents.length} intent markers?`)) setRoute(emptyRoute(), 'Route cleared.'); });
   document.querySelector<HTMLInputElement>('#route-name')?.addEventListener('change', (event) => { state.route.name = (event.target as HTMLInputElement).value.trim() || 'Untitled tour'; saveDraft(); announce('Route name saved locally.'); render(); });
   document.querySelector<HTMLFormElement>('#coordinate-form')?.addEventListener('submit', (event) => {
@@ -301,7 +317,7 @@ function bindEvents(): void {
   document.querySelectorAll<HTMLButtonElement>('[data-load-saved]').forEach((button) => button.addEventListener('click', () => { const route = loadSaved()[Number(button.dataset.loadSaved)]; if (route) setRoute(structuredClone(route), `Loaded “${route.name}”.`); }));
 }
 
-const savedTheme = localStorage.getItem(THEME_KEY);
+const savedTheme = isDemo ? sessionStorage.getItem(DEMO_THEME_KEY) : localStorage.getItem(THEME_KEY);
 if (savedTheme === 'light' || savedTheme === 'dark') document.documentElement.dataset.theme = savedTheme;
 render();
 

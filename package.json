@@ -9,7 +9,10 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "preview": "vite preview --host 0.0.0.0",
-    "test": "vitest run tests/gpx.test.ts && playwright test"
+    "serve:test": "node scripts/serve-dist.mjs",
+    "test": "vitest run tests/gpx.test.ts && playwright test",
+    "test:claims": "playwright test tests/e2e/claims.spec.ts",
+    "verify:url": "node scripts/verify-url.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.10.2",
