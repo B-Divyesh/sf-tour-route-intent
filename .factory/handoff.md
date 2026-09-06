@@ -1,14 +1,20 @@
-# Tour Route Intent — repair 2 handoff
+# Tour Route Intent — verification 3 handoff
 
-- Status: **PASS**
-- Work order: `tour-route-intent-repair-2`
+- Status: **FAIL**
+- Work order: `tour-route-intent-verify-3`
 - Live URL: <https://tour-route-intent.sociobot.in/>
 - Demo URL: <https://tour-route-intent.sociobot.in/demo/>
 - Date: 6 September 2026 UTC
 - Implementation SHA: `1cab72a4f9822eae6344bf74b4403cecf464b05b`
-- Product documentation SHA: `772d3e55e7b802429473d795fb2d8d23f756452f`
+- Product documentation SHA before this report: `cb93ce7e43ce05c0bfd3ae2a904abad21fdf3c88`
 
-The documentation SHA contains the claims manifest, demo contract, copy audit, catalog description, README, and design update. This handoff is a later report-only change; the deployed product image comes from the implementation SHA.
+The deployed product image comes from the implementation SHA. `cb93ce7` is report-only relative to `1cab72a`; this handoff and `.factory/verification-3.md` are also report-only changes.
+
+## Verification 3 result
+
+The clean clone passed `npm ci`, audit, lint, typecheck, 8 unit tests, 26 browser tests, build, every one of the 18 declared claim commands, and the aggregate 18-claim suite. The live deployment exactly matched 16 checked files from that build. Fresh phone and desktop first screens, the isolated demo/reset/real-data protection, accessibility, keyboard focus, reduced motion, privacy requests, legal routes, links, offline claim suite, metadata, headers, and the deliberate HTTP 404 all passed.
+
+**Do not treat this as a release PASS.** Verification found one S2 claims-contract issue: the public Field kit statements about its $12 one-time price, unavailable new purchases, and no payment being taken by this site are not entries in `.factory/claims.json` and have no exact outcome test. This yields **3 untested public claims**. See `.factory/verification-3.md` for evidence and the required repair.
 
 ## Delivered repair
 
